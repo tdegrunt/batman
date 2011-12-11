@@ -200,7 +200,7 @@ asyncTest 'it should not fail if the iterator is destroyed', 1, ->
   # Wait till the first stack pop which will happen after the iterator is instantiated, but its children haven't finished
   Batman.setImmediate ->
     ok instance
-    instance.destroy()
+    instance.die()
 
   delay ->
 
