@@ -18,6 +18,7 @@ class TestStorageAdapter extends Batman.StorageAdapter
     id = record.set('id', @counter++)
     if id
       @storage[@storageKey(record) + id] = record.toJSON()
+      record.fromJSON {id: id}
       callback(undefined, record)
     else
       callback(new Error("Couldn't get record primary key."))
@@ -60,13 +61,13 @@ class TestStorageAdapter extends Batman.StorageAdapter
 
   perform: (action, record, options, callback) ->
     throw new Error("No options passed to storage adapter!") unless options?
-    @[action](record, options, callback)
+    @[action](record, options.data, callback)
 
 class AsyncTestStorageAdapter extends TestStorageAdapter
-  for k in ['update', 'create', 'read', 'readAll', 'destroy']
-    do (k) =>
-      AsyncTestStorageAdapter[k] = ->
-        setTimeout (=> TestStorageAdapter[k].apply(@, arguments)), 0
+  perform: (args...) ->
+    setTimeout =>
+      TestStorageAdapter::perform.apply(@, args)
+    , 0
 
 createStorageAdapter = (modelClass, adapterClass, data = {}) ->
   adapter = new adapterClass(modelClass)

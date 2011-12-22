@@ -26,22 +26,21 @@ asyncTest "associations can be inherited", 2, ->
   namespace = {}
   class namespace.Store extends Batman.Model
     @encode 'name', 'id'
-    @hasMany 'products', {namespace: namespace, autoload: false}
 
   class namespace.TestModel extends Batman.Model
-    @belongsTo 'store', {namespace: namespace}
+    @belongsTo 'store', {namespace: namespace, autoload: false}
 
   class namespace.Product extends namespace.TestModel
     @encode 'name', 'id'
 
-  productAdapter = createStorageAdapter namespace.Product, AsyncTestStorageAdapter,
-    'products2': {name: "Product Two", id: 2, store_id: 3}
+  storeAdapter = createStorageAdapter namespace.Store, AsyncTestStorageAdapter,
+    'stores2': {name: "Store Two", id: 2}
 
-  store = new namespace.Store({id:3, name:"JSON Store"})
-  store.get('products').load (err, products) ->
-    product = products.get('toArray.0')
-    equal product.get('id'), 2
-    ok product instanceof namespace.Product
+  product = new namespace.Product({id: 2, store_id: 2})
+  product.get('store').load (err, store) ->
+    throw err if err
+    ok store instanceof namespace.Store
+    equal store.get('name'), "Store Two"
     QUnit.start()
 
 asyncTest "support model classes that haven't been loaded yet", 2, ->
@@ -62,9 +61,9 @@ asyncTest "support model classes that haven't been loaded yet", 2, ->
 
     @Blog.find 1, (err, blog) =>
       customer = blog.get 'customer'
-      equal customer.get('id'), 1
-      equal customer.get('name'), 'Customer One'
-      QUnit.start()
+      delay ->
+        equal customer.get('id'), 1
+        equal customer.get('name'), 'Customer One'
   ), ASYNC_TEST_DELAY
 
 asyncTest "models can save while related records are loading", 1, ->
@@ -102,4 +101,3 @@ asyncTest "inline saving can be disabled", 1, ->
     store.save (err, savedStore) =>
       equal @storeAdapter.storage.stores1["products"], undefined
       QUnit.start()
-
